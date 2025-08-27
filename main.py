@@ -1,25 +1,19 @@
-#Modified by smartbuilds.io
-#Date: 27.09.20
-#Desc: This web application serves a motion JPEG stream
-# main.py
-# import the necessary packages
-from flask import Flask, render_template, Response, request, send_from_directory
-from usb_camera import VideoCamera
-import os
+from flask import Flask, render_template, Response
+import argparse
 
-pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
+from usb_camera import UsbVideoCamera
 
-# App Globals (do not edit)
+pi_camera = None
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
-    return render_template('index.html') #you can customze index.html here
+    return render_template('index.html')  # you can customize index.html here
 
 
 def gen(camera):
-    #get camera frame
+    # get camera frame
     while True:
         frame_bytes = camera.get_frame_bytes()
         yield (b'--frame\r\n'
@@ -40,5 +34,19 @@ def take_picture():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='Pi Camera Stream',
+        description='Create your own live stream from a Raspberry Pi using the Pi camera module or a USB web cam.'
+    )
+    parser.add_argument('-c', '--camera-type', help="Camera type to use", default='usb', choices=['usb'])
+    parser.add_argument('-f', '--flip', help="Flips pictures taken vertically", type=bool, default=False)
+    parser.add_argument('-t', '--file-type', help="Format for pictures taken", default='.jpeg')
 
+    args = parser.parse_args()
+    camera_objects = {
+        # 'module': ModuleVideoCamera,
+        'usb': UsbVideoCamera
+    }
+
+    pi_camera = camera_objects[args.camera_type](flip=args.flip, file_type=args.file_type)
     app.run(host='0.0.0.0', debug=False)

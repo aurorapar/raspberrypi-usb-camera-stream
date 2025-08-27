@@ -1,23 +1,18 @@
 # Make you own Raspberry Pi Camera Stream
 
-Create your own live stream from a Raspberry Pi using the Pi camera module. Build your own applications from here.
+Create your own live stream from a Raspberry Pi using a USB webcam. Build your own applications from here.
 
 ## How it works
-The Pi streams the output of the camera module over the web via Flask. Devices connected to the same network would be able to access the camera stream via
+The Pi streams the output of the webcam over the web via Flask. Devices connected to the same network would be able to access the camera stream via
 
 ```
 <raspberry_pi_ip:5000>
 ```
 
-## Screenshots
-| ![Setup](readme/pi-stream-client.jpg) | ![Live Pi Camera Stream](readme/pi-stream-screen-capture.jpg) |
-| ------------------------------------- | ------------------------------------------------------------- |
-| Pi Setup                              | Pi - Live Stream                                              |
-
 ## Preconditions
 
 * Raspberry Pi 4, 2GB is recommended for optimal performance. However you can use a Pi 3 or older, you may see a increase in latency.
-* Raspberry Pi 4 Camera Module or Pi HQ Camera Module (Newer version)
+* USB webcam identifiable at `/dev/video*`
 * Python 3 recommended.
 
 ## Library dependencies
@@ -36,7 +31,6 @@ sudo apt-get install libhdf5-dev
 sudo pip3 install flask
 sudo pip3 install numpy
 sudo pip3 install opencv-contrib-python
-sudo pip3 install imutils
 sudo pip3 install opencv-python
 
 ```
@@ -54,7 +48,7 @@ Open up terminal and clone the Camera Stream repo:
 
 ```
 cd /home/pi
-git clone https://github.com/EbenKouao/pi-camera-stream-flask.git
+git clone https://github.com/aurorapar/raspberrypi-usb-camera-stream.git
 ```
 
 ## Step 2 – Launch Web Stream
@@ -62,6 +56,13 @@ git clone https://github.com/EbenKouao/pi-camera-stream-flask.git
 Note: Creating an Autostart of the main.py script is recommended to keep the stream running on bootup.
 ```bash cd modules
 sudo python3 /home/pi/pi-camera-stream-flask/main.py
+```
+
+Available arguments:
+```commandline
+-c --camera-type  # Defaults to a USB camera (USB only available at this time)
+-f --flip  # Flips saved pictures taken vertically True/False
+-t --file-type  # Changes the format of saved pictures taken 
 ```
 
 ## Step 3 – Autostart your Pi Stream
@@ -81,8 +82,6 @@ sudo python3 /home/pi/pi-camera-stream-flask/main.py
 This would cause the following terminal command to auto-start each time the Raspberry Pi boots up. This in effect creates a headless setup - which would be accessed via SSH.
 Note: make sure SSH is enabled.
 
-## More Projects / Next Steps
-View the latest Build: [Pi Smart Cam with Motion Sensor](https://github.com/EbenKouao/pi-smart-cam)
+## Final Notes
 
-Alternatively, view more projects that build on the Pi Camera on [smartbuilds.io](https://smartbuilds.io).
-
+The project was forked off of https://github.com/EbenKouao/pi-camera-stream-flask, however due to an outdated module (imutils) the Raspberry Pi Camera Module was dropped. I do not have equipment available to test a correction.

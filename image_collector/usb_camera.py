@@ -9,7 +9,7 @@ from image_handler import calculate_frame_difference, calculate_frame_difference
 
 
 class UsbVideoCamera(object):
-    def __init__(self, flip=False, file_type=".jpg", photo_string="stream_photo"):
+    def __init__(self, flip=False, file_type=".jpg", photo_string="motion_detected"):
         self.flip = flip  # Flip frame vertically
         self.file_type = file_type  # image type i.e. .jpg
         self.photo_string = photo_string  # Name to save the photo
@@ -40,7 +40,10 @@ class UsbVideoCamera(object):
     # Take a photo, called by camera button
     def take_picture(self):
         frame = self.flip_if_needed(self.get_frame())
-        today_date = datetime.now().strftime("%m%d%Y-%H%M%S")  # get current time
+        return self.save_frame(frame)
+
+    def save_frame(self, frame):
+        today_date = datetime.now().strftime("%m%d%Y-%H%M%S%f")  # get current time
         photo_name = str(self.photo_string + "_" + today_date + self.file_type)
         cv.imwrite(photo_name, frame)
         return photo_name
@@ -80,9 +83,12 @@ class UsbVideoCamera(object):
     def detect_motion_over_network(self):
         print("Trying to detect motion")
         frames = self.frame_queue.get()
+        pic_one = self.save_frame(frames[0])
+        pic_two = self.save_frame(frames[1])
+        data = (pic_one, pic_two)
         self.frame_queue.task_done()
         arg = (frames[0], frames[1])
-        network_thread = Thread(target=calculate_frame_difference_network, args=(arg,))
+        network_thread = Thread(target=calculate_frame_difference_network, args=(data,))
         network_thread.start()
 
 

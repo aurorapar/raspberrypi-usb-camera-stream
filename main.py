@@ -1,5 +1,7 @@
-from flask import Flask, render_template, Response
 import argparse
+import signal
+
+from flask import Flask, render_template, Response
 
 from usb_camera import UsbVideoCamera
 
@@ -33,6 +35,13 @@ def take_picture():
     return photo_name
 
 
+def signal_handler(signal_handle, frame):
+    print("\nStopping program...")
+    pi_camera.stop_motion_detection()
+    print("Motion detection halted")
+    exit()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='Pi Camera Stream',
@@ -48,5 +57,10 @@ if __name__ == '__main__':
         'usb': UsbVideoCamera
     }
 
+    print("Arguments handled")
     pi_camera = camera_objects[args.camera_type](flip=args.flip, file_type=args.file_type)
+    pi_camera.start_motion_detection()
+
+    signal.signal(signal.SIGINT, signal_handler)
     app.run(host='0.0.0.0', debug=False)
+

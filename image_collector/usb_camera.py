@@ -1,6 +1,7 @@
 from datetime import datetime
 from queue import Queue
 from threading import Thread
+import time
 
 import cv2 as cv
 import numpy as np
@@ -9,10 +10,11 @@ from image_handler import calculate_frame_difference, calculate_frame_difference
 
 
 class UsbVideoCamera(object):
-    def __init__(self, flip=False, file_type=".jpg", photo_string="motion_detected"):
+    def __init__(self, flip=False, file_type=".jpg", photo_string="motion_detected", wait_time=5):
         self.flip = flip  # Flip frame vertically
         self.file_type = file_type  # image type i.e. .jpg
         self.photo_string = photo_string  # Name to save the photo
+        self.wait_time = wait_time
         self.gather_frames_thread = Thread(target=self.gather_frames_loop)
         self.motion_detection_thread = Thread(target=self.detect_motion_loop)
         self.frame_queue = Queue()
@@ -70,6 +72,7 @@ class UsbVideoCamera(object):
         while True:
             if not self.detecting_motion:
                 break
+            time.sleep(self.wait_time)
             self.detect_motion_over_network()
 
     def detect_motion(self):
@@ -87,7 +90,6 @@ class UsbVideoCamera(object):
         pic_two = self.save_frame(frames[1])
         data = (pic_one, pic_two)
         self.frame_queue.task_done()
-        arg = (frames[0], frames[1])
         network_thread = Thread(target=calculate_frame_difference_network, args=(data,))
         network_thread.start()
 

@@ -19,20 +19,22 @@ The Pi streams the output of the webcam over the web via Flask. Devices connecte
 Install the following dependencies to create camera stream.
 
 ```
-sudo apt-get update
-sudo apt-get upgrade
+sudo apt update
+sudo apt upgrade
 
-sudo apt-get install libatlas-base-dev
-sudo apt-get install libjasper-dev
-sudo apt-get install libqtgui4
-sudo apt-get install libqt4-test
-sudo apt-get install libhdf5-dev
+sudo apt install libatlas-base-dev
+sudo apt install libjasper-dev
+sudo apt install libqtgui4
+sudo apt install libqt4-test
+sudo apt install libhdf5-dev
+sudo apt install v4l-utils
 
-sudo pip3 install flask
-sudo pip3 install numpy
-sudo pip3 install opencv-contrib-python
-sudo pip3 install opencv-python
-
+sudo apt install python3-flask
+sudo apt install python3-numpy
+sudo apt install python3-opencv
+sudo apt install python3-pil
+sudo apt install python3-requests # used on the motion_detection branch for network operations
+sudo apt install python3-waitress # used for production server when handling network operations
 ```
 
 Note: This installation of opencv may take a while depending on your pi model.

@@ -49,8 +49,9 @@ if __name__ == '__main__':
     )
     parser.add_argument('-c', '--camera-type', help="Camera type to use", default='usb', choices=['usb'])
     parser.add_argument('-f', '--flip', help="Flips pictures taken vertically", type=bool, default=False)
-    parser.add_argument('-t', '--file-type', help="Format for pictures taken", default='.jpeg')
+    parser.add_argument('-t', '--file-type', help="Format for pictures taken", default='.png')
     parser.add_argument('-w', '--wait-time', help="Time in seconds between testing images", type=int, default=5)
+    parser.add_argument('-d', '--destination-server', help="Destination host for image processing")
 
     args = parser.parse_args()
     camera_objects = {
@@ -58,8 +59,12 @@ if __name__ == '__main__':
         'usb': UsbVideoCamera
     }
 
-    print("Arguments handled")
-    pi_camera = camera_objects[args.camera_type](flip=args.flip, file_type=args.file_type, wait_time=args.wait_time)
+    pi_camera = camera_objects[args.camera_type](
+        flip=args.flip,
+        file_type=args.file_type,
+        wait_time=args.wait_time,
+        destination_server=args.destination_server
+    )
     pi_camera.start_motion_detection()
 
     signal.signal(signal.SIGINT, signal_handler)

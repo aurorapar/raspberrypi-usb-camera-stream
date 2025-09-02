@@ -10,16 +10,20 @@ from image_handler import calculate_frame_difference, calculate_frame_difference
 
 
 class UsbVideoCamera(object):
-    def __init__(self, flip=False, file_type=".jpg", photo_string="motion_detected", wait_time=5):
+    def __init__(self, flip=False, file_type=".jpg", photo_string="motion_detected", wait_time=5, destination_server=None):
         self.flip = flip  # Flip frame vertically
         self.file_type = file_type  # image type i.e. .jpg
         self.photo_string = photo_string  # Name to save the photo
         self.wait_time = wait_time
-        self.gather_frames_thread = Thread(target=self.gather_frames_loop)
-        self.motion_detection_thread = Thread(target=self.detect_motion_loop)
+        self.destination_server = destination_server
         self.frame_queue = Queue()
         self.detecting_motion = False
-        self.camera_stream = cv.VideoCapture(0)
+        self.camera_stream = cv.VideoCapture(0, cv.CAP_V4L2)
+
+        self.gather_frames_thread = Thread(target=self.gather_frames_loop)
+        self.motion_detection_thread = Thread(target=self.detect_motion_over_network_loop)
+        self.network_queue_thread = Thread(target=self.process_network_queue_loop)
+        self.network_queue = Queue()
 
     def __del__(self):
         self.camera_stream.release()
@@ -59,8 +63,10 @@ class UsbVideoCamera(object):
         while True:
             if not self.detecting_motion:
                 break
-            frames = (self.get_frame(), self.get_frame())
-            self.frame_queue.put(frames)
+            frame_one = self.get_frame()
+            frame_two = self.get_frame()
+            self.frame_queue.put((frame_one, frame_two))
+            time.sleep(self.wait_time)
 
     def stop_motion_detection(self):
         if self.detecting_motion:
@@ -69,11 +75,12 @@ class UsbVideoCamera(object):
             print("Motion detection halted")
 
     def detect_motion_loop(self):
+        print(f"Started detecting motion at {time.ctime()}\n\n")
         while True:
             if not self.detecting_motion:
                 break
             time.sleep(self.wait_time)
-            self.detect_motion_over_network()
+            self.detect_motion()
 
     def detect_motion(self):
         print("Trying to detect motion")
@@ -83,17 +90,32 @@ class UsbVideoCamera(object):
         print(f"Difference: {difference}")
         return difference
 
+    def detect_motion_over_network_loop(self):
+        print(f"Started detecting motion at {time.ctime()}\n\n")
+        self.network_queue_thread.start()
+        while True:
+            if not self.detecting_motion:
+                break
+            time.sleep(self.wait_time)
+            self.detect_motion_over_network()
+
     def detect_motion_over_network(self):
-        print("Trying to detect motion")
         frames = self.frame_queue.get()
         pic_one = self.save_frame(frames[0])
         pic_two = self.save_frame(frames[1])
         data = (pic_one, pic_two)
         self.frame_queue.task_done()
-        network_thread = Thread(target=calculate_frame_difference_network, args=(data,))
+        network_thread = Thread(target=calculate_frame_difference_network, args=(data, self.destination_server))
+        self.network_queue.put(network_thread)
         network_thread.start()
 
-
-
-
-
+    def process_network_queue_loop(self):
+        while True:
+            if not self.detecting_motion:
+                break
+            time.sleep(max(.01, self.wait_time / 3))
+            if self.network_queue.empty():
+                continue
+            network_thread = self.network_queue.get()
+            network_thread.join()
+            self.network_queue.task_done()
